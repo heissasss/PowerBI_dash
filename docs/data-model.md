@@ -1,18 +1,18 @@
-# Модель данных
+# Data Model
 
-## Таблицы
+## Tables
 
-- Players (1 строка = 1 игрок) — собрана в Power Query из Customer_status_change_report: дата регистрации (первый статус Pending Verification), дата верификации (первый Active), дата первого успешного депозита (подтягивается из Deposits), привязанный аффилиат.
-- Deposits (1 строка = 1 транзакция) — очищенная Deposit_history, с флагом успешности.
-- Dim_Affiliate — объединение partner_union_players и справочника Dictionary; отсутствие игрока в partner_union_players — Organic; отсутствие аффилиата в Dictionary — Unknown.
-- Dim_Date — календарь, помечен как Date table.
-- Dim_Status — справочник статусов транзакций.
+- **Players** (1 row = 1 player) — built in Power Query from `Customer_status_change_report`: registration date (first *Pending Verification* status), verification date (first *Active* status), first successful deposit date (pulled from Deposits), and the assigned affiliate.
+- **Deposits** (1 row = 1 transaction) — cleaned `Deposit_history` with a success flag.
+- **Dim_Affiliate** — union of `partner_union_players` and the `Dictionary` lookup; a player missing from `partner_union_players` is Organic; an affiliate missing from `Dictionary` is Unknown.
+- **Dim_Date** — calendar table, marked as a Date table.
+- **Dim_Status** — lookup of transaction statuses.
 
-## Ключевое решение: три связи с календарём
+## Key Design Decision: Three Relationships to the Calendar
 
-Players связан с Dim_Date тремя способами (по дате регистрации — активная, по датам верификации и депозита — неактивные, через USERELATIONSHIP в DAX)
+Players is related to Dim_Date in three ways: by registration date (active), and by verification date and first deposit date (inactive, enabled in DAX via `USERELATIONSHIP`). This supports two types of metrics:
 
-- событийные — регистрации/верификации/депозиты в динамике по фактической дате самого события;
-- когортные — конверсии, где игрок закреплён за периодом своей регистрации независимо от даты последующих действий
+- **event-based** — registrations / verifications / deposits over time, by the actual date of each event;
+- **cohort-based** — conversions where a player is pinned to the period of their registration, regardless of when later actions happened.
 
-Тип трафика и аффилиат не дублируются в Deposits — они приходят транзитивно через Players — Dim_Affiliate, поэтому фильтрация по аффилиату одинаково работает и для конверсий, и для сумм депозитов.
+Traffic type and affiliate are not duplicated in Deposits — they flow transitively through Players → Dim_Affiliate, so filtering by affiliate works consistently for both conversions and deposit amounts.

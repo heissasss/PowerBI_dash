@@ -1,6 +1,6 @@
-// Все меры хранятся в таблице _Measures
+// All measures live in the _Measures table
 
-// ===== Событийные метрики (по дате события, USERELATIONSHIP) =====
+// ===== Event-based metrics (by event date, via USERELATIONSHIP) =====
 
 [Registrations] =
     CALCULATE ( COUNTROWS ( Players ), USERELATIONSHIP ( Dim_Date[Date], Players[RegistrationDate] ) )
@@ -11,7 +11,7 @@
 [First Deposits] =
     CALCULATE ( COUNTROWS ( Players ), Players[IsDepositor] = 1, USERELATIONSHIP ( Dim_Date[Date], Players[FirstDepositDate] ) )
 
-// ===== Когортные метрики (по дате регистрации) =====
+// ===== Cohort metrics (by registration date) =====
 
 [Cohort Registrations] =
     CALCULATE ( COUNTROWS ( Players ), Players[IsRegistered] = 1 )
@@ -34,7 +34,7 @@
 [CR Ver to FTD %] =
     DIVIDE ( [Cohort FTD], [Cohort Verified] )
 
-// ===== Депозиты =====
+// ===== Deposits =====
 
 [Successful Deposits Amount] =
     CALCULATE ( SUM ( Deposits[Amount] ), Deposits[Status] = "OK" )
@@ -63,7 +63,7 @@
 [Rejected Deposits Amount] =
     CALCULATE ( SUM ( Deposits[Amount] ), Deposits[Status] = "Rejected" )
 
-// ===== Скорость до первого депозита =====
+// ===== Time to first deposit =====
 
 [Avg Hours To FTD] =
     CALCULATE ( AVERAGE ( Players[HoursToFTD] ), Players[IsDepositor] = 1 )
@@ -74,7 +74,7 @@
 [FTD within 24h %] =
     DIVIDE ( CALCULATE ( COUNTROWS ( Players ), Players[IsDepositor] = 1, Players[HoursToFTD] <= 24 ), [Cohort FTD] )
 
-// ===== Качество данных =====
+// ===== Data quality =====
 
 [Players Without Registration] =
     CALCULATE ( COUNTROWS ( Players ), Players[IsRegistered] = 0 )

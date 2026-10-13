@@ -1,81 +1,83 @@
-# Аналитика привлечения игроков: трафик и эффективность аффилиатов
+# Player Acquisition Analytics: Traffic and Affiliate Performance
 
-Дашборд в Power BI и аналитическая записка по воронке привлечения: **регистрация → верификация → первый депозит (FTD)** в разрезе типов трафика и аффилиатов. Выполнено как тестовое задание на позицию аналитика данных.
+A Power BI dashboard and analytical report on the player acquisition funnel: **registration → verification → first deposit (FTD)**, broken down by traffic type and affiliate. Completed as a take-home assignment for a Data Analyst position.
 
-![Обзор трафика и эффективности аффилиатов](images/01-overview.png)
+![Traffic and affiliate performance overview](images/01-overview.png)
 
-## Задача
+## Task
 
-По выгрузкам из четырёх источников (лог статусов игроков, история депозитов, привязка игроков к аффилиатам, справочник типов трафика) нужно было:
+Using exports from four sources (player status log, deposit history, player-to-affiliate mapping, traffic type dictionary), the goal was to:
 
-- построить модель данных и дашборд с ключевыми метриками воронки;
-- сравнить эффективность типов трафика и отдельных аффилиатов;
-- найти проблемы качества данных;
-- сформулировать выводы и рекомендации для бизнеса.
+- build a data model and a dashboard with key funnel metrics;
+- compare the performance of traffic types and individual affiliates;
+- identify data quality issues;
+- deliver business conclusions and recommendations.
 
-## Ключевые результаты
+## Key Results
 
-| Метрика | Значение |
+| Metric | Value |
 |---|--:|
-| Зарегистрированные игроки | 81 835 |
-| CR регистрация → верификация | 66,1 % |
-| CR регистрация → первый депозит | 16,5 % |
-| CR верификация → первый депозит | 24,9 % |
-| Сумма успешных депозитов | 247,5 млн |
-| Медианное время до FTD | 1,4 ч |
+| Registered players | 81,835 |
+| CR registration → verification | 66.1% |
+| CR registration → first deposit | 16.5% |
+| CR verification → first deposit | 24.9% |
+| Successful deposits amount | 247.5M |
+| Median time to FTD | 1.4 h |
 
-**Главные выводы** (подробно в [аналитической записке](docs/analytical-note.md)):
+**Main findings** (full details in the [analytical report](docs/analytical-note.md)):
 
-1. **Концентрационный риск.** Один аффилиат приносит 28 % регистраций и 44 % суммы депозитов.
-2. **Узкое место воронки — первый депозит, а не верификация.** 65 % депозиторов платят в первые 24 часа, поэтому welcome-коммуникация должна срабатывать сразу.
-3. **Объём и качество дают разные источники.** Крупнейшие аффилиаты конвертируют хуже среднего, а средние по объёму — в 2–3 раза лучше.
-4. **Органика хуже верифицируется, но лучше платит после верификации.** Упрощение верификации для органики даёт наибольший потенциальный прирост.
-5. **Найдено 10 проблем качества данных**: неполный справочник аффилиатов, обрезанная история депозитов, аномальный всплеск в ноябре 2025 и другие.
+1. **Concentration risk.** A single affiliate drives 28% of registrations and 44% of the deposit amount.
+2. **The funnel bottleneck is the first deposit, not verification.** 65% of depositors pay within the first 24 hours, so welcome communication has to fire immediately.
+3. **Volume and quality come from different sources.** The largest affiliates convert below average, while mid-sized ones convert 2–3× better.
+4. **Organic traffic verifies worse but pays better once verified.** Simplifying verification for organic users has the highest upside.
+5. **10 data quality issues found**: incomplete affiliate dictionary, left-truncated deposit history, an anomalous spike in November 2025, and more.
 
-## Дашборд
+## Dashboard
 
-**Страница 1. Обзор.** KPI-карточки, динамика регистраций, верификаций и FTD с линией конверсии, воронка, структура по типу трафика. Срезы: квартал, тип трафика, аффилиат.
+**Page 1. Overview.** KPI cards, monthly registrations / verifications / FTDs with a conversion line, funnel, and registration mix by traffic type. Slicers: quarter, traffic type, affiliate.
 
-**Страница 2. Детализация.** Таблицы по типам трафика и аффилиатам (drill-down) с конверсиями, ARPPU и медианным временем до FTD.
+**Page 2. Details.** Tables by traffic type and by affiliate (drill-down) with conversion rates, ARPPU and median hours to FTD.
 
-![Типы трафика и аффилиаты](images/02-traffic-and-affiliates.png)
+![Traffic types and affiliates](images/02-traffic-and-affiliates.png)
 
-## Модель данных
+> The dashboard UI labels are in Russian, as required by the original assignment.
 
-Схема «звезда»: две таблицы фактов и три измерения. Все преобразования сделаны в Power Query.
+## Data Model
+
+Star schema with two fact tables and three dimensions. All transformations are done in Power Query.
 
 ```mermaid
 erDiagram
-    Dim_Date ||--o{ Players : "RegistrationDate (активная)"
-    Dim_Date ||--o{ Players : "VerificationDate (неактивная)"
-    Dim_Date ||--o{ Players : "FirstDepositDate (неактивная)"
-    Dim_Date ||--o{ Deposits : "DepositDate (неактивная)"
+    Dim_Date ||--o{ Players : "RegistrationDate (active)"
+    Dim_Date ||--o{ Players : "VerificationDate (inactive)"
+    Dim_Date ||--o{ Players : "FirstDepositDate (inactive)"
+    Dim_Date ||--o{ Deposits : "DepositDate (inactive)"
     Dim_Affiliate ||--o{ Players : AffiliateKey
     Players ||--o{ Deposits : UserId
     Dim_Status ||--o{ Deposits : Status
 ```
 
-| Таблица | Гранулярность | Источник |
+| Table | Grain | Source |
 |---|---|---|
-| `Players` | 1 строка = 1 игрок | лог статусов + первый успешный депозит + аффилиат |
-| `Deposits` | 1 строка = 1 транзакция | история депозитов, дедупликация, флаг успешности |
-| `Dim_Affiliate` | 1 строка = 1 аффилиат | привязка игроков + справочник; `Organic` и `Unknown` заданы явно |
-| `Dim_Date` | 1 строка = 1 день | генерируется по диапазону данных, помечена как Date table |
-| `Dim_Status` | 1 строка = 1 статус | статусы транзакций |
+| `Players` | 1 row = 1 player | status log + first successful deposit + affiliate |
+| `Deposits` | 1 row = 1 transaction | deposit history, deduplicated, with a success flag |
+| `Dim_Affiliate` | 1 row = 1 affiliate | player mapping + dictionary; `Organic` and `Unknown` defined explicitly |
+| `Dim_Date` | 1 row = 1 day | generated from the data range, marked as a Date table |
+| `Dim_Status` | 1 row = 1 status | transaction statuses |
 
-**Ключевое решение: три связи `Players` с календарём.** Активна только связь по дате регистрации. Связи по датам верификации и первого депозита неактивны и включаются в мерах через `USERELATIONSHIP`. Так на одном дашборде работают два типа метрик:
+**Key design decision: three relationships between `Players` and the calendar.** Only the registration-date relationship is active. The verification-date and first-deposit-date relationships are inactive and are enabled inside measures via `USERELATIONSHIP`. This lets one dashboard support two kinds of metrics:
 
-- **событийные**: сколько регистраций, верификаций и FTD произошло в периоде;
-- **когортные**: какая доля игроков, зарегистрированных в периоде, дошла до верификации или депозита, независимо от того, когда это случилось.
+- **event-based**: how many registrations, verifications and FTDs happened in a period;
+- **cohort-based**: what share of players registered in a period went on to verify or deposit, regardless of when that happened.
 
-Тип трафика не дублируется в `Deposits`: он приходит транзитивно через `Players → Dim_Affiliate`, поэтому фильтр по аффилиату одинаково работает и для конверсий, и для сумм.
+Traffic type is not duplicated in `Deposits`: it flows transitively through `Players → Dim_Affiliate`, so an affiliate filter works the same way for conversions and for deposit amounts.
 
-Подробнее: [docs/data-model.md](docs/data-model.md).
+More details: [docs/data-model.md](docs/data-model.md).
 
-## Примеры DAX
+## DAX Examples
 
 ```dax
--- Событийная метрика: верификации по дате самой верификации
+-- Event-based metric: verifications by the verification date itself
 Verified Players =
 CALCULATE (
     COUNTROWS ( Players ),
@@ -83,10 +85,10 @@ CALCULATE (
     USERELATIONSHIP ( Dim_Date[Date], Players[VerificationDate] )
 )
 
--- Когортная конверсия: игроки закреплены за месяцем регистрации
+-- Cohort conversion: players are pinned to their registration month
 CR Reg to FTD % = DIVIDE ( [Cohort FTD], [Cohort Registrations] )
 
--- Доля игроков, сделавших первый депозит в первые сутки
+-- Share of players who made their first deposit within 24 hours
 FTD within 24h % =
 DIVIDE (
     CALCULATE ( COUNTROWS ( Players ), Players[IsDepositor] = 1, Players[HoursToFTD] <= 24 ),
@@ -94,32 +96,31 @@ DIVIDE (
 )
 ```
 
-Все 24 меры: [src/dax/measures.dax](src/dax/measures.dax). Все запросы Power Query: [src/power-query/](src/power-query/).
+All 24 measures: [src/dax/measures.dax](src/dax/measures.dax). All Power Query queries: [src/power-query/](src/power-query/).
 
-## Стек
+## Tech Stack
 
-Power BI Desktop · Power Query (M) · DAX · моделирование «звезда» · когортный анализ
+Power BI Desktop · Power Query (M) · DAX · star schema modeling · cohort analysis
 
-## Структура репозитория
+## Repository Structure
 
 ```
 ├── dashboard/
-│   └── affiliate-traffic-dashboard.pbix   # отчёт Power BI
+│   └── affiliate-traffic-dashboard.pbix   # Power BI report
 ├── docs/
-│   ├── analytical-note.md                 # аналитическая записка: выводы и качество данных
-│   ├── data-model.md                      # описание модели данных
-│   └── source-docs/                       # исходные .docx и .pptx
-├── images/                                # скриншоты дашборда
+│   ├── analytical-note.md                 # analytical report: findings and data quality
+│   └── data-model.md                      # data model description
+├── images/                                # dashboard screenshots
 └── src/
-    ├── dax/measures.dax                   # все DAX-меры
-    └── power-query/                       # все M-запросы в порядке зависимостей
+    ├── dax/measures.dax                   # all DAX measures
+    └── power-query/                       # all M queries in dependency order
 ```
 
-## Как открыть
+## How to Open
 
-1. Скачайте `dashboard/affiliate-traffic-dashboard.pbix` и откройте в [Power BI Desktop](https://www.microsoft.com/power-platform/products/power-bi/desktop) (бесплатно, Windows).
-2. Данные уже загружены в файл, поэтому обновлять их не нужно. Для обновления из CSV укажите папку с файлами в параметре `FolderPath` (*Преобразовать данные → Изменить параметры*).
+1. Download `dashboard/affiliate-traffic-dashboard.pbix` and open it in [Power BI Desktop](https://www.microsoft.com/power-platform/products/power-bi/desktop) (free, Windows).
+2. The data is already loaded into the file, so no refresh is needed. To refresh from CSV, point the `FolderPath` parameter to the folder with the source files (*Transform data → Edit parameters*).
 
-## Автор
+## Author
 
-**Денис Марфин** — аналитик данных (BI, SQL, Python)
+**Denis Marfin** — Data Analyst (BI, SQL, Python)
