@@ -1,0 +1,83 @@
+// Все меры хранятся в таблице _Measures
+
+// ===== Событийные метрики (по дате события, USERELATIONSHIP) =====
+
+[Registrations] =
+    CALCULATE ( COUNTROWS ( Players ), USERELATIONSHIP ( Dim_Date[Date], Players[RegistrationDate] ) )
+
+[Verified Players] =
+    CALCULATE ( COUNTROWS ( Players ), Players[IsVerified] = 1, USERELATIONSHIP ( Dim_Date[Date], Players[VerificationDate] ) )
+
+[First Deposits] =
+    CALCULATE ( COUNTROWS ( Players ), Players[IsDepositor] = 1, USERELATIONSHIP ( Dim_Date[Date], Players[FirstDepositDate] ) )
+
+// ===== Когортные метрики (по дате регистрации) =====
+
+[Cohort Registrations] =
+    CALCULATE ( COUNTROWS ( Players ), Players[IsRegistered] = 1 )
+
+[Cohort Verified] =
+    CALCULATE ( COUNTROWS ( Players ), Players[IsRegistered] = 1, Players[IsVerified] = 1 )
+
+[Cohort FTD] =
+    CALCULATE ( COUNTROWS ( Players ), Players[IsRegistered] = 1, Players[IsDepositor] = 1 )
+
+[Verified %] =
+    DIVIDE ( [Cohort Verified], [Cohort Registrations] )
+
+[CR Reg to Ver %] =
+    DIVIDE ( [Cohort Verified], [Cohort Registrations] )
+
+[CR Reg to FTD %] =
+    DIVIDE ( [Cohort FTD], [Cohort Registrations] )
+
+[CR Ver to FTD %] =
+    DIVIDE ( [Cohort FTD], [Cohort Verified] )
+
+// ===== Депозиты =====
+
+[Successful Deposits Amount] =
+    CALCULATE ( SUM ( Deposits[Amount] ), Deposits[Status] = "OK" )
+
+[Successful Deposits Count] =
+    CALCULATE ( COUNTROWS ( Deposits ), Deposits[Status] = "OK" )
+
+[Depositors] =
+    CALCULATE ( DISTINCTCOUNT ( Deposits[UserId] ), Deposits[Status] = "OK" )
+
+[Avg Deposit Amount] =
+    DIVIDE ( [Successful Deposits Amount], [Successful Deposits Count] )
+
+[ARPPU] =
+    DIVIDE ( [Successful Deposits Amount], [Depositors] )
+
+[Deposits Per Depositor] =
+    DIVIDE ( [Successful Deposits Count], [Depositors] )
+
+[All Deposit Attempts] =
+    COUNTROWS ( Deposits )
+
+[Deposit Success Rate %] =
+    DIVIDE ( [Successful Deposits Count], [All Deposit Attempts] )
+
+[Rejected Deposits Amount] =
+    CALCULATE ( SUM ( Deposits[Amount] ), Deposits[Status] = "Rejected" )
+
+// ===== Скорость до первого депозита =====
+
+[Avg Hours To FTD] =
+    CALCULATE ( AVERAGE ( Players[HoursToFTD] ), Players[IsDepositor] = 1 )
+
+[Median Hours To FTD] =
+    CALCULATE ( MEDIAN ( Players[HoursToFTD] ), Players[IsDepositor] = 1 )
+
+[FTD within 24h %] =
+    DIVIDE ( CALCULATE ( COUNTROWS ( Players ), Players[IsDepositor] = 1, Players[HoursToFTD] <= 24 ), [Cohort FTD] )
+
+// ===== Качество данных =====
+
+[Players Without Registration] =
+    CALCULATE ( COUNTROWS ( Players ), Players[IsRegistered] = 0 )
+
+[Affiliates Not In Dictionary] =
+    CALCULATE ( DISTINCTCOUNT ( Dim_Affiliate[AffiliateId] ), Dim_Affiliate[Traffic] = "Unknown" )

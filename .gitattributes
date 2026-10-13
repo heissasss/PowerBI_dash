@@ -1,0 +1,6 @@
+*.pbix binary
+*.docx binary
+*.pptx binary
+*.png binary
+*.pq linguist-language=PowerQuery
+*.dax linguist-language=DAX

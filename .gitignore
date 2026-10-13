@@ -1,0 +1,10 @@
+# Power BI
+*.pbix.bak
+.pbi/localSettings.json
+.pbi/cache.abf
+~$*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
